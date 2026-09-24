@@ -14,80 +14,63 @@ The project grew from the same general idea as a universal replacement appliance
 
 One reason for including an **optional condensate-pump output** is to make collected dehumidifier water easier to route to a storage container or garden-watering setup instead of simply dumping the reservoir.
 
-The controller concept therefore allows for:
+The controller concept therefore allows for normal bucket/float shutdown, a condensate pump output, primary and optional secondary high-water/overflow sensing, pump timeout/fault handling, and future selectable bucket/gravity/pumped drain modes.
 
-- normal bucket/float shutdown,
-- a condensate pump output,
-- primary and optional secondary high-water/overflow sensing,
-- pump timeout/fault handling,
-- future selectable modes such as bucket-only, gravity drain, or pumped drain.
-
-This does **not** imply that dehumidifier condensate is potable or universally suitable for every plant or irrigation method. Water quality depends on the appliance, coil cleanliness, airborne contaminants, storage method, and materials contacted by the water. Any garden reuse should be evaluated separately for the intended application.
+Dehumidifier condensate is not potable and is not automatically suitable for every irrigation use. Water quality depends on appliance cleanliness, airborne contaminants, storage, and contacted materials.
 
 ## Current V1 architecture
 
 ```text
 CYD 3.5 ESP32 touchscreen
         |
-        | external low-voltage I2C
         | GPIO25 SDA / GPIO32 SCL
         v
  +---------------+       +-------------+       +----------------+
  | MCP23017 I/O  |       | ADS1115 ADC |       | SHT31 / SHT4x  |
  +-------+-------+       +------+------+       +--------+-------+
          |                      |                       |
-         | digital I/O          | thermistors           | room RH/T
-         v                      v                       v
- low-voltage relay driver / interlocks / sensors
+      ULN2803A              thermistors              room RH/T
          |
          v
- external appliance-rated relays/contactors/power modules
+ external appliance-rated relays/contactors
          |
          +--> compressor
          +--> fan(s)
          +--> condensate pump
-         +--> optional defrost / auxiliary output
 ```
 
-The CYD is intended to remain a **low-voltage supervisory controller**. Compressor and fan mains current must not be routed through the CYD or the proposed low-voltage I/O board.
+The CYD remains a **low-voltage supervisory controller**. Compressor and fan mains current must not be routed through the CYD or proposed I/O board.
 
-## Intended V1 functions
+## Starter engineering package
 
-- Touchscreen humidity setpoint and status display
-- Room humidity/temperature sensing
-- Compressor minimum-OFF and minimum-ON protection
-- Startup compressor lockout after reset/power loss
-- Fan pre-run and post-run sequencing
-- Bucket-full / condensate interlock
-- Optional condensate pump control
-- Optional evaporator-temperature freeze/defrost logic
-- Configurable appliance profiles
-- Fault handling and service diagnostics
-- Safe output initialization after boot/reset
-- External I/O through MCP23017 + ADS1115
+The repository now contains a V0.1 bench-oriented starter package:
+
+- [Proposed prototype BOM](hardware/BOM.csv)
+- [Low-voltage wiring / connection-level schematic](hardware/LOW_VOLTAGE_WIRING.md)
+- [Arduino/CYD starter firmware](firmware/UniversalDehumidifier/UniversalDehumidifier.ino)
+- [Host-testable compressor guard and controller core](firmware/UniversalDehumidifier/)
+- [Host safety tests](tests/host/test_main.cpp)
+- [V1 design specification](docs/design/Universal_Dehumidifier_Controller_V1_Design.md)
+- [V1 implementation plan](docs/plan/Universal_Dehumidifier_Controller_V1_Implementation_Plan.md)
+- [Project disclaimer and validation status](DISCLAIMER.md)
+
+The V0.1 Arduino sketch deliberately displays **`OUTPUTS LOCKED - BENCH MODE`** and does not yet enable the MCP23017 relay-coil output adapter. The compressor timing/state logic can therefore be exercised on a host before any appliance output becomes energizable.
+
+### Current host-test coverage
+
+The local V0.1 controller core has been compiled as C++17 and exercised for startup lockout, compressor minimum timing, bucket-full shutdown, required-I2C loss, invalid configuration, 32-bit timer wraparound, immediate safety override, condensate-pump request behavior, and secondary-high-water fault shutdown. This is software-only evidence, not hardware validation.
 
 ## Important electrical/safety boundary
 
 This repository presently describes an **experimental controller architecture**, not a certified appliance repair procedure.
 
-Any eventual implementation must retain or appropriately re-engineer the appliance's original protective features, including as applicable:
+Any eventual implementation must retain or appropriately re-engineer compressor thermal overload/start components, fusing, protective earth, pressure/temperature protection, enclosure/fire protection, creepage/clearance, and conductor/connector current ratings as applicable.
 
-- compressor thermal overload,
-- start relay/PTC/capacitor system,
-- fusing,
-- protective earth/grounding,
-- pressure or temperature protection,
-- enclosure/fire protection,
-- creepage and clearance,
-- conductor and connector current ratings.
+Relay or contactor selection must be based on actual compressor/motor load, including starting or locked-rotor current—not merely a resistive-load rating.
 
-Relay or contactor selection must be based on the actual compressor/motor load, including starting or locked-rotor current—not merely a relay's resistive-load rating.
-
-**Do not connect the current untested design to mains voltage or an appliance compressor based solely on this repository.** Initial development should be performed with low-voltage simulated loads, followed by controlled bench validation and appliance-specific engineering review.
+**Do not connect the current untested design to mains voltage or an appliance compressor based solely on this repository.** Initial development should use low-voltage simulated loads, followed by controlled bench validation and appliance-specific engineering review.
 
 ## Hardware target currently assumed
-
-V1 is being planned around the known CYD board profile:
 
 - `ESP32-3248S035R / E32N35T`
 - 3.5-inch 320x480 resistive touchscreen
@@ -97,30 +80,24 @@ V1 is being planned around the known CYD board profile:
 - ADS1115 nominal address: `0x48`
 - SHT31 or SHT4x room humidity/temperature sensor
 
-These details are design assumptions until the complete assembled controller is verified.
-
-## Documents
-
-- [V1 design specification](docs/design/Universal_Dehumidifier_Controller_V1_Design.md)
-- [V1 implementation plan](docs/plan/Universal_Dehumidifier_Controller_V1_Implementation_Plan.md)
-- [Project disclaimer and validation status](DISCLAIMER.md)
-
 ## Development status
-
-As of the initial repository publication:
 
 - [x] Concept architecture drafted
 - [x] CYD target and low-voltage expansion strategy selected
 - [x] Control-state and safety requirements drafted
 - [x] Firmware implementation plan drafted
+- [x] Proposed prototype BOM drafted
+- [x] Connection-level low-voltage wiring drafted
+- [x] Host-testable compressor/controller core drafted
+- [x] Initial host safety tests passing
 - [ ] Critical schematic review
 - [ ] Exact component/BOM review
 - [ ] Low-voltage prototype assembled
-- [ ] Firmware compiled for the target CYD
-- [ ] Simulated-load bench testing
-- [ ] Fault-injection testing
+- [ ] Arduino sketch compiled for the target CYD
+- [ ] Simulated-load bench testing on real I/O hardware
+- [ ] Fault-injection testing on real hardware
 - [ ] Mains power-stage engineering review
 - [ ] Appliance-specific integration test
 - [ ] Long-duration operational validation
 
-Until those unchecked items are completed, this repository should be regarded as **research/design notes and a development starting point only**.
+Until the unchecked items are completed, this repository remains **research/design notes and a development starting point only**.
