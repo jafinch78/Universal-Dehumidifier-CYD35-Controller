@@ -1,0 +1,16 @@
+# Arduino / ESP32 build output
+build/
+*.bin
+*.elf
+*.map
+*.hex
+
+# IDE / OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Local scratch and captures
+scratch/
+logs/
