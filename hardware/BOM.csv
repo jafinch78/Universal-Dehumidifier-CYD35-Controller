@@ -1,0 +1,28 @@
+Ref,Qty,Part / Value,Function,Prototype suggestion,Status / notes
+U1,1,ESP32-3248S035R / E32N35T CYD 3.5,Touchscreen supervisory controller,Existing CYD board,Target board assumption; verify exact board before assembly
+U2,1,MCP23017-E/SP or MCP23017 module,16-bit I/O expansion,28-DIP IC or breakout,3.3 V logic; nominal I2C address 0x20
+U3,1,ADS1115 16-bit ADC or breakout,Analog thermistor / sensor acquisition,ADS1115 module,3.3 V logic; nominal I2C address 0x48
+U4,1,ULN2803A,Low-side relay/contactor coil driver,ULN2803A DIP-18,Integrated flyback diodes; COM connects to +12 V coil supply
+U5,1,SHT31-D or SHT4x breakout,Room relative humidity and temperature sensor,Adafruit/Sensirion-style breakout,Mount in representative room airflow away from coil discharge
+U6,1,12 V to 5 V regulated buck >=1 A,CYD 5 V supply,Quality enclosed/buck module,Prototype only; verify input range current thermal and isolation requirements
+U7,1,MCP1700-3302E/TO or equivalent 3.3 V regulator,External I/O logic supply,TO-92 LDO,External I/O should not depend on CYD 3.3 V regulator capacity
+F1,1,0.75-1.0 A resettable fuse or fuse,Low-voltage 12 V input protection,PTC or replaceable fuse,Size after measured relay-coil/control current
+D1,1,SS34 or equivalent,12 V reverse-polarity protection,Schottky diode,Prototype approach; MOSFET ideal-diode protection may replace it
+D2,1,SMBJ15A or equivalent TVS,12 V transient suppression,TVS diode,Optional for bench/prototype; select for actual supply environment
+R1-R2,2,4.7 kΩ 1%,I2C pull-ups to 3.3 V,1/4 W resistor,Fit once on bus; omit duplicates on breakout boards if necessary
+R3-R6,4,10 kΩ 1%,Digital-input pull-ups to 3.3 V,1/4 W resistor,For low-voltage dry-contact inputs only
+R7-R10,4,1 kΩ 1%,Digital-input series protection,1/4 W resistor,Place near MCP23017 input
+C1-C4,4,100 nF,Digital-input debounce/noise filter,Ceramic,Place from protected digital input to GND
+R11-R14,4,10 kΩ 0.1% preferred,NTC reference resistors,Metal-film,One per ADS1115 thermistor channel
+R15-R18,4,1 kΩ 1%,ADC input series protection,1/4 W resistor,Between thermistor-divider sense node and ADS1115 input
+C5-C8,4,100 nF,ADC low-pass filter,Ceramic,From ADS1115 input side of 1 kΩ resistor to GND
+C9-C12,4,100 nF,IC local decoupling,Ceramic,One close to each low-voltage IC/module supply
+C13-C14,2,10 µF,3.3 V and 5 V rail bulk decoupling,Electrolytic/ceramic,Place near regulator / bus connector
+J1,1,2-position terminal,12 V low-voltage input,Screw terminal,No mains voltage on this board
+J2,1,4-position connector,CYD appliance bus: 3.3V/GND/SDA/SCL,JST-XH or locking equivalent,Recommended SDA GPIO25 and SCL GPIO32
+J3,1,8-position connector,Four dry-contact digital inputs + returns,Screw/JST terminal,Inputs: bucket full secondary high pressure/thermal auxiliary
+J4,1,8-position connector,Four analog inputs / NTC returns,Screw/JST terminal,Keep sensor wiring away from relay/mains wiring
+J5,1,8-position connector,Six low-side relay-coil outputs + 12 V / GND,Screw terminal,Outputs drive coils only not compressor/fan mains current
+K1-K6,0-6,Application-specific external relays/contactors,Switch compressor fan pump aux loads,External to low-voltage PCB,Select by actual motor/compressor ratings including start/LRA; not a generic BOM item
+PS1,1,Isolated AC/DC appliance supply with 12 V output,Provides SELV/low-voltage control power,Application-specific certified module,Selection depends on appliance mains voltage enclosure and required approvals
+NTC1-NTC4,0-4,Existing or added NTC thermistors,Evaporator/condenser/aux temperature sensing,Reuse only after resistance curve is identified,Default math may assume 10 kΩ B3950 but must be configured/validated
